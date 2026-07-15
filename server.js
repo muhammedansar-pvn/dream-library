@@ -5,6 +5,10 @@ const dotenv = require ("dotenv")
 const connectDB= require("./src/config/db")
 
 const authrouter=require("./src/router/authrouter")
+const memberauthroutes = require("./src/router/memberauthroutes")
+const notFound= require("./src/middleware/notFound")
+const errorhandling= require("./src/middleware/errorhandling")
+const bookroutes= require("./src/router/bookroutes")
 
 dotenv.config()
 
@@ -15,6 +19,13 @@ console.log("MONGO_URI:", process.env.MONGO_URI)
 
 
 app.use("/auth", authrouter);
+app.use("/memberauth" , memberauthroutes)
+app.use("/book", bookroutes )
+
+
+app.use(notFound)
+app.use(errorhandling)
+
 
 app.get('/', (req, res) => {
     res.send('server running');

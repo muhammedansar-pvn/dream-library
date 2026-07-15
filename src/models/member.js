@@ -1,44 +1,42 @@
-const mongoose = require ("mongoose")
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
-const memberschema= new mongoose.Schema(
-{
-name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-    },
-    
-    mobile: {
-      type: Number, 
-      default: "",
-    },
-    status: {
-      type: String,
-      enum: ["Active", "Inactive"],
-      default: "Active",
-    },
-    
-    membershipnum: {
-      type: Number,
-      unique: true,
-      sparse: true,
-    },
-    
-  },
-  {
-   
-    timestamps: {
-      createdAt: "created_at",
-      updatedAt: "updated_at",
-    }
+const memberSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+
+
+  email: { type: String, required: true, unique: true },
+
+
+  password: { type: String, required: true },
+
+  address: { type: String },
+
+
+  membershipNumber: { type: String, unique: true, uppercase: true },
+
+
+  status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }
+
+  
+}, { timestamps: true });
+
+memberSchema.pre("save", async function () {
+  if (!this.membershipNumber) {
+    const count = await mongoose.model("Member").countDocuments();
+    this.membershipNumber = `LIB${String(count + 1).padStart(4, "0")}`;
   }
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+  
+});
 
-);
 
-module.exports = mongoose.model("member",memberschema)
+memberSchema.methods.comparePassword = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
+
+module.exports = mongoose.model("Member", memberSchema);
+
+

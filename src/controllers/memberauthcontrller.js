@@ -1,6 +1,6 @@
 const Member = require("../models/member")
 const jwt = require("jsonwebtoken")
-const bcrypt = require("bcrypt")
+
 
 const generateAccessToken = (member) => {
   return jwt.sign(
@@ -19,9 +19,9 @@ const generateRefreshToken = (member) => {
 };
 
 
-const memberRegister = async (req,res)=>{
+const memberRegister = async (req,res,next)=>{
   try {
-    const {name,email,password,mobile,address} = req.body;
+    const {name,email,mobile,address} = req.body;
 
     const existingMember = await Member.findOne({email})
     if (existingMember){
@@ -29,7 +29,7 @@ const memberRegister = async (req,res)=>{
     }
 
     const newMember = await Member.create({ 
-      name, email, password, mobile, address
+      name, email, mobile, address
     })
     
     const accessToken = generateAccessToken(newMember);
@@ -52,7 +52,7 @@ const memberRegister = async (req,res)=>{
 }
 
 
-const memberLogin = async (req,res)=>{
+const memberLogin = async (req,res,next)=>{
   try {
     const {membershipNumber} = req.body;
     

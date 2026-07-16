@@ -9,6 +9,7 @@ const memberauthroutes = require("./src/router/memberauthroutes")
 const notFound= require("./src/middleware/notFound")
 const errorhandling= require("./src/middleware/errorhandling")
 const bookroutes= require("./src/router/bookroutes")
+const borrowroutes = require ("./src/router/borrowroutes")
 
 dotenv.config()
 
@@ -21,7 +22,7 @@ console.log("MONGO_URI:", process.env.MONGO_URI)
 app.use("/auth", authrouter);
 app.use("/memberauth" , memberauthroutes)
 app.use("/book", bookroutes )
-
+app.use ("/borrow", borrowroutes)
 
 app.use(notFound)
 app.use(errorhandling)

@@ -1,42 +1,41 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 const memberSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+    name: { type: String, required: true },
+
+    email: { type: String, required: true, unique: true },
 
 
-  email: { type: String, required: true, unique: true },
+    address: { type: String },
+
+    membershipNumber: { type: String, unique: true, uppercase: true },
+
+    borrowedBooks: [
+        {
+            bookId: { type: mongoose.Schema.Types.ObjectId, ref: 'BorrowBooks' },
+            returned: { type: Boolean, default: false },
+            Title: String,
+            borrowDate: Date,
+            dueDate: Date,
+        }
+    ],
 
 
-  password: { type: String, required: true },
-
-  address: { type: String },
+    status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }
 
 
-  membershipNumber: { type: String, unique: true, uppercase: true },
-
-
-  status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' }
-
-  
 }, { timestamps: true });
 
-memberSchema.pre("save", async function () {
-  if (!this.membershipNumber) {
-    const count = await mongoose.model("Member").countDocuments();
-    this.membershipNumber = `LIB${String(count + 1).padStart(4, "0")}`;
-  }
-  if (this.isModified("password")) {
-    this.password = await bcrypt.hash(this.password, 10);
-  }
+memberSchema.pre("save", async function (next) {
+    if (!this.membershipNumber) {
+        const randomBuffer = crypto.randomBytes(2).readUInt16BE(0);
+        const pin = String(randomBuffer % 10000).padStart(4, '0');
+        this.membershipNumber = `LIB${pin}`;
+    }
+    
   
 });
 
 
-memberSchema.methods.comparePassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
-};
-
 module.exports = mongoose.model("Member", memberSchema);
-
-

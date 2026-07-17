@@ -9,6 +9,7 @@ const notFound= require("./src/middleware/notFound")
 const errorhandling= require("./src/middleware/errorhandling")
 const bookroutes= require("./src/router/bookroutes")
 const borrowroutes = require ("./src/router/borrowroutes")
+const dashbordroutes = require ("./src/router/dashbordroutes")
 
 dotenv.config()
 
@@ -21,6 +22,8 @@ console.log("MONGO_URI:", process.env.MONGO_URI)
 app.use("/auth", authrouter);
 app.use("/book", bookroutes )
 app.use ("/borrow", borrowroutes)
+app.use ("/dashbord", dashbordroutes)
+
 
 app.use(notFound)
 app.use(errorhandling)

@@ -6,7 +6,7 @@ const Router= express.Router()
 
 const {addNewBook, getallbooks, getBookById, updateBookById, deleteBookById}=require("../controllers/bookcontroller")
 
-Router.post("/addbook",addNewBook );
+Router.post("/addbook",addNewBook  );
 Router.put("/:id",updateBookById );
 Router.delete("/:id",deleteBookById);
 

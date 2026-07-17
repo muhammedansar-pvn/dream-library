@@ -5,11 +5,15 @@ const protect = require("../middleware/authmiddleware")
 const router=express.Router()
 
 
-const {register,login} =require("../controllers/authcontroller")
+const {register,login, memberRegister, memberLogin} =require("../controllers/authcontroller")
 
 
 router.post("/register",register)
 router.post("/login",login)
 router.get("/profile",protect)
+
+router.post("/memberregister", memberRegister);
+router.post("/memberlogin", memberLogin);
+
 
 module.exports=router

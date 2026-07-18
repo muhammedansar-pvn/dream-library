@@ -1,169 +1,113 @@
-const user = require("../models/user");
-const Member= require ("../models/member")
+const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const generateAccessToken = (user) => {
-    return jwt.sign(
-        { id: user._id, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-    );
-};
+const SALT_ROUNDS = 10;
 
-const generateRefreshToken = (user) => {
-    return jwt.sign(
-        { id: user._id },
-        process.env.JWT_REFRESH_SECRET,
-        { expiresIn: "7d" }
-    );
-};
+const generateTokens = (user) => ({
+  accessToken: jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  ),
+  refreshToken: jwt.sign(
+    { id: user._id },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "7d" }
+  ),
+});
+
+const buildUserResponse = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  ...(user.membershipNumber && { membershipNumber: user.membershipNumber }),
+});
 
 const register = async (req, res, next) => {
-    try {
-        const { name, email, password, mobile, address } = req.body;
-        
-        const existinguser = await user.findOne({ email });
-        if (existinguser) {
-            return res.status(400).json({
-                message: "user already exist"
-            });
-        }
-        
-        const hashedpassword = await bcrypt.hash(password, 10);
-        
-        const newUser = await user.create({
-            name,
-            email,
-            password: hashedpassword,
-            mobile,
-            address
-        });
-        
-        const accessToken = generateAccessToken(newUser);
-        const refreshToken = generateRefreshToken(newUser);
-        
-        return res.status(200).json({
-            message: "registration successfull",
-            accessToken,
-            refreshToken,
-            user: {
-                id: newUser._id,
-                name: newUser.name,
-                email: newUser.email,
-            },
-        });
-    } catch (err) {
-        next(err); 
-    }
-};
-
-
-const login = async (req, res, next) => {
-    try {
-        const { email, password } = req.body;
-        
-        const checkuser = await user.findOne({ email });
-        if (!checkuser) {
-            return res.status(400).json({
-                message: "user not found"
-            });
-        }
-        
-        const passwordcheck = await bcrypt.compare(password, checkuser.password);
-        if (!passwordcheck) {
-            return res.status(400).json({
-                
-                message: "incorrect password" 
-            });
-        }
-        
-        const accessToken = generateAccessToken(checkuser);
-        const refreshToken = generateRefreshToken(checkuser);
-        
-        return res.status(200).json({
-            message: "login successfull",
-            accessToken,
-            refreshToken,
-            user: {
-                id: checkuser._id,
-                name: checkuser.name,
-                email: checkuser.email,
-            },
-        });
-    } catch (err) {
-       
-        next(err); 
-    }
-};
-
-
-const memberRegister = async (req,res,next)=>{
   try {
-    const {name,email,mobile,address} = req.body;
+    const { name, email, password, mobile, address, role } = req.body;
 
-    const existingMember = await member.findOne({email})
-    if (existingMember){
-      return res.status(400).json({ message:"Member already exist" })
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
     }
 
-    const newMember = await member.create({ 
-      name, email, mobile, address
-    })
-    
-    const accessToken = generateAccessToken(newMember);
-    const refreshToken = generateRefreshToken(newMember);
+    const userRole = ["admin", "member"].includes(role?.toLowerCase())
+      ? role.toLowerCase()
+      : "member";
+
+    const normalizedEmail = email.toLowerCase();
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).json({ message: "An account with this email already exists" });
+    }
+
+    const userData = {
+      name,
+      email: normalizedEmail,
+      mobile,
+      address,
+      role: userRole,
+      password: await bcrypt.hash(password, SALT_ROUNDS),
+      ...(userRole === "member" && { status: "Active" }),
+    };
+
+    const newUser = await User.create(userData);
+    const { accessToken, refreshToken } = generateTokens(newUser);
 
     return res.status(201).json({
-      message:"Member registration successfull",
+      message: `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} registration successful`,
       accessToken,
       refreshToken,
-      member: {
-        id: newMember._id,
-        name: newMember.name,
-        email: newMember.email,
-        membershipNumber: newMember.membershipNumber
-      },
-    })
-  } catch (error) {
-    res.status(500).json({message: error.message})
+      user: buildUserResponse(newUser),
+    });
+  } catch (err) {
+    next(err);
   }
-}
+};
 
-
-const memberLogin = async (req,res,next)=>{
+const login = async (req, res, next) => {
   try {
-    const {membershipNumber} = req.body;
-    
-    const member = await Member.findOne({membershipNumber})
-    if (!member){
-      return res.status(404).json({ message:"Member not found" })
+    const { email, password, membershipNumber } = req.body;
+
+    if (!membershipNumber && !email) {
+      return res.status(400).json({ message: "Please provide an email or a library card number" });
     }
 
-   
-
-    if(member.status !== 'Active'){
-      return res.status(403).json ({ message:"Membership is Inactive" })
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
     }
 
-    const accessToken = generateAccessToken(member);
-    const refreshToken = generateRefreshToken(member);
+    const targetUser = membershipNumber
+      ? await User.findOne({ membershipNumber: membershipNumber.toUpperCase() })
+      : await User.findOne({ email: email.toLowerCase() });
+
+    if (!targetUser) {
+      return res.status(404).json({ message: "Account records do not exist" });
+    }
+
+    if (targetUser.status !== "Active") {
+      return res.status(403).json({ message: "Access denied. Account is currently marked inactive" });
+    }
+
+    const passwordMatches = await bcrypt.compare(password, targetUser.password);
+    if (!passwordMatches) {
+      return res.status(400).json({ message: "Invalid password credentials provided" });
+    }
+
+    const { accessToken, refreshToken } = generateTokens(targetUser);
 
     return res.status(200).json({
-      message:"Member login successfull",
+      message: "Authentication successful",
       accessToken,
       refreshToken,
-      member: {
-        id: member._id,
-        name: member.name,
-        email: member.email,
-        membershipNumber: member.membershipNumber
-      },
-    })
-  } catch (error) {
-    res.status(500).json({message: error.message})
+      user: buildUserResponse(targetUser),
+    });
+  } catch (err) {
+    next(err);
   }
-}
+};
 
-
-module.exports = { register, login,memberRegister,memberLogin };
+module.exports = { register, login };

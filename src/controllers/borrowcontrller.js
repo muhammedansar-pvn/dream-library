@@ -1,5 +1,5 @@
 const borrowBooks = require("../models/borrow");
-const member = require("../models/member");
+const member = require("../models/user");
 const books = require("../models/book");
 
 const borrowBook = async (req, res, next) => {
@@ -73,7 +73,11 @@ const returnBook = async (req, res, next) => {
             },
         );
         if (!user) {
-            return res.status(400).json({ success: false, message: 'No active borrow record found for this book and user.' });
+            return res.status(400).json({
+                
+            success: false,
+            
+            message: 'No active borrow record found for this book and user.' });
         }
         
        

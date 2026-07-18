@@ -1,14 +1,10 @@
-const express = require ("express")
-const { borrowBook, returnBook } = require("../controllers/borrowcontrller")
+const express = require("express");
+const { borrowBook, returnBook } = require("../controllers/borrowcontrller");
+const {protected} = require("../middleware/authmiddleware");
 
-const protect= require("../middleware/authmiddleware")
+const Router = express.Router();
 
-const Router = express.Router()
+Router.post("/borrowbook", protected, borrowBook);
+Router.post("/returnbook", protected, returnBook);
 
-
-Router.post ("/borrowbook", borrowBook , protect )
-Router.post ("/returnbook", returnBook, protect )
-
-
-
-module.exports=Router 
+module.exports = Router;

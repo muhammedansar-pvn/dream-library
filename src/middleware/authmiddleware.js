@@ -1,29 +1,27 @@
-// middleware/auth.js
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
-const protect= (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  console.log(authHeader);
+const protected = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
   
-  const token = authHeader && authHeader.split(' ')[1]; 
-
-  
-  if (!token) {
-    return res.status(401).json({ message: 'Access Denied: No Token Provided' });
-  }
+  if (!token) return res.status(401).json({ message: "Access Denied: Missing authorization header token" });
 
   try {
-   
-    const verifiedPayload = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.user = verifiedPayload; 
-    
-   
-    next(); 
-  } catch (error) {
-  
-    return res.status(403).json({ message: 'Invalid or Expired Token' });
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = verified;
+    next();
+  } catch (err) {
+    res.status(403).json({ message: "Invalid or expired token payload structure" });
   }
 };
 
-module.exports = protect;
+const authorizeRoles = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden: Your profile level lacks authorization permissions" });
+    }
+    next();
+  };
+};
+
+module.exports = { protected, authorizeRoles };

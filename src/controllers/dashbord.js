@@ -1,17 +1,26 @@
-const books= require("../models/book")
-const member = require ("../models/member")
-const borrow =  require ("../models/borrow")
+const books = require("../models/book");
+const member = require("../models/user");
+const borrow = require("../models/borrow");
 
-const dashbord= async (req,res,next)=>{
+const dashbord = async (req, res, next) => {
+    try {
+        const [bookResult, memberResult, borrowResult] = await Promise.all([
+            books.aggregate([{ $count: "totalbooks" }]),
+            member.aggregate([{ $count: "totalmembers" }]),
+            borrow.aggregate([{ $count: "totalborrowedbooks" }])
+        ]);
 
-    const [bookResult, memberResult, borrowResult] = await Promise.all([
-    books.aggregate([{ $count: "totalbooks" }]),
-    member.aggregate([{ $count: "total members" }]),
-    borrow.aggregate([{ $count: "total borrowed boos" }])
-]);
 
-console.log(bookResult,memberResult,borrowResult)
+        res.status(200).json({
+            success: true, 
+            bookResult,
+            memberResult,
+            borrowResult
+           
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
-}
-
-module.exports={dashbord}
+module.exports = { dashbord };

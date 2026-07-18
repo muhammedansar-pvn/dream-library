@@ -11,12 +11,19 @@ const dashbord = async (req, res, next) => {
         ]);
 
 
+const overduebooks = await borrow.aggregate([
+    { $match: { status: "borrowed", dueDate: { $lt: new Date() } } },
+    { $count: "totaloverduebooks" }
+
+])
+
+
         res.status(200).json({
             success: true, 
             bookResult,
             memberResult,
-            borrowResult
-           
+            borrowResult,
+           overduebooks
         });
     } catch (error) {
         next(error);

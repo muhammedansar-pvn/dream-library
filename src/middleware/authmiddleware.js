@@ -15,7 +15,7 @@ const protected = (req, res, next) => {
   }
 };
 
-const authorizeRoles = (...Roles) => {
+const accsesRoles = (...Roles) => {
   return (req, res, next) => {
     if (!req.user || !Roles.includes(req.user.role)) {
       return res.status(403).json({ message: "you have not permissions" });
@@ -24,4 +24,4 @@ const authorizeRoles = (...Roles) => {
   };
 };
 
-module.exports = { protected, authorizeRoles };
+module.exports = { protected, accsesRoles };

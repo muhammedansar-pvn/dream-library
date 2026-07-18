@@ -3,15 +3,15 @@ const express = require("express")
 const Router = express.Router()
 
 const { getallbooks, getBookById , addNewBook, updateBookById, deleteBookById } = require("../controllers/bookcontroller")
-const { protected, authorizeRoles } = require("../middleware/authmiddleware")
+const { protected, accsesRoles } = require("../middleware/authmiddleware")
 
 
-Router.get("/allbooks", getallbooks);
+Router.get("/", getallbooks);
 Router.get("/:id", getBookById);
 
 
-Router.post("/addbook", protected, authorizeRoles("admin"), addNewBook);
-Router.put("/:id", protected, authorizeRoles("admin"), updateBookById);
-Router.delete("/:id", protected, authorizeRoles("admin"), deleteBookById);
+Router.post("/addbook", protected, accsesRoles("admin"), addNewBook);
+Router.put("/:id", protected, accsesRoles("admin"), updateBookById);
+Router.delete("/:id", protected,accsesRoles("admin"), deleteBookById);
 
 module.exports = Router

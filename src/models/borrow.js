@@ -17,7 +17,7 @@ const BorrowSchema = new mongoose.Schema({
     },
     dueDate: { 
         type: Date, 
-        required: true 
+        required: true ,
     },
     returnDate: { 
         type: Date, 

@@ -17,7 +17,7 @@ const addNewBook = async (req, res, next) => {
       publishedyear,
       totalcopies,
       availablecopies: totalcopies,
-      isbn: isbn || undefined
+      isbn: isbn 
     });
 
     return res.status(201).json({ error: false, message: "Book added successfully", book: newBook });
@@ -69,12 +69,44 @@ const deleteBookById = async (req, res) => {
 
 const getallbooks = async (req, res) => {
   try {
-    const allbooks = await books.find();
-    return res.status(200).json(allbooks);
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
+    const { category, search } = req.query;
+    
+    const filter = {};
+    
+    if (category) {
+      filter.category = category;
+    }
+    
+    if (search) {
+      filter.title = { $regex: search, $options: "i" }; 
+      filter.author = { $regex: search, $options: "i" }; 
+    }
+    
+    filter.availableCopies = { $gt: 0 };
+    
+    let books = await books.find(filter);
+
+    res.status(200).json({
+      success: true,
+      count: books.length,
+      books,
+    })
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch books",
+      error: error.message,
+    })
   }
 };
+
+
+
+
+
+
+
 
 const getBookById = async (req, res) => {
   const { id } = req.params;

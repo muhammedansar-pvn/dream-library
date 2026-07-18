@@ -35,16 +35,16 @@ const register = async (req, res, next) => {
       ? role.toLowerCase()
       : "member";
 
-    const emailvrf = email.toLowerCase();
+    const emailvld = email.toLowerCase();
 
-    const existingUser = await User.findOne({ email: emailvrf });
+    const existingUser = await User.findOne({ email: emailvld });
     if (existingUser) {
       return res.status(400).json({ message: "An account with this email already exists" });
     }
 
     const userData = {
       name,
-      email: emailvrf,
+      email: emailvld,
       mobile,
       address,
       role: userRole,

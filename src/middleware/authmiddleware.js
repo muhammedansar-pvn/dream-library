@@ -15,10 +15,10 @@ const protected = (req, res, next) => {
   }
 };
 
-const authorizeRoles = (...allowedRoles) => {
+const authorizeRoles = (...Roles) => {
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Forbidden: Your profile level lacks authorization permissions" });
+    if (!req.user || !Roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "you have not permissions" });
     }
     next();
   };

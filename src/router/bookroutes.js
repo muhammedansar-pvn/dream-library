@@ -1,21 +1,17 @@
-const express= require ("express")
+const express = require("express")
 
-const Router= express.Router()
+const Router = express.Router()
 
-//const protect = require("../middleware/authmiddleware")
-
-const {addNewBook, getallbooks, getBookById, updateBookById, deleteBookById}=require("../controllers/bookcontroller")
-
-Router.post("/addbook",addNewBook  );
-Router.put("/:id",updateBookById );
-Router.delete("/:id",deleteBookById);
-
-Router.get("/allbooks",getallbooks );
+const { getallbooks, getBookById , addNewBook, updateBookById, deleteBookById } = require("../controllers/bookcontroller")
+const { protected, authorizeRoles } = require("../middleware/authmiddleware")
 
 
-Router.get("/:id",getBookById );
+Router.get("/allbooks", getallbooks);
+Router.get("/:id", getBookById);
 
 
+Router.post("/addbook", protected, authorizeRoles("admin"), addNewBook);
+Router.put("/:id", protected, authorizeRoles("admin"), updateBookById);
+Router.delete("/:id", protected, authorizeRoles("admin"), deleteBookById);
 
-
-module.exports= Router
+module.exports = Router

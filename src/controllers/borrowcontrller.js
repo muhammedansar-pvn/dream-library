@@ -83,7 +83,7 @@ const returnBook = async (req, res, next) => {
        
         await borrowBooks.findOneAndUpdate(
             { memberId: user._id, bookId: book._id, status: 'borrowed' },
-            { $set: { status: 'returned', returnDate: new Date() } },
+            { $set: { status: 'Returned', returnDate: new Date() } },
             { sort: { borrowDate: -1 } }
         );
 

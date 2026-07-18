@@ -62,8 +62,8 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.pre("save", async function (next) {
-  if (this.role !== "member" || this.membershipNumber) return next();
+userSchema.pre("save", async function () {
+  if (this.role !== "member" || this.membershipNumber) return;
 
   let generatedID;
   let exists = true;
@@ -75,7 +75,6 @@ userSchema.pre("save", async function (next) {
   }
 
   this.membershipNumber = generatedID;
-  
 });
 
 module.exports = mongoose.models.User || mongoose.model("User", userSchema);

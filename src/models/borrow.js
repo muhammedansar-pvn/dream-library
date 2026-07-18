@@ -3,12 +3,12 @@ const mongoose = require("mongoose");
 const BorrowSchema = new mongoose.Schema({
     bookId: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: "Books", 
+        ref: "books", 
         required: true 
     },
     memberId: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: "member", 
+        ref: "User", 
         required: true 
     },
     issueDate: { 

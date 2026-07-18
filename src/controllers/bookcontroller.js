@@ -1,4 +1,5 @@
-const books = require("../models/book");
+const User = require ("../models/user")
+const books= require ("../models/book")
 
 const addNewBook = async (req, res, next) => {
   try {
@@ -26,6 +27,46 @@ const addNewBook = async (req, res, next) => {
   }
 };
 
+const updateBookById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const updatedBook = await books.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+    if (!updatedBook) {
+      return res.status(404).json({ msg: "Book Not Found" });
+    }
+    return res.status(200).json({ msg: "Book has updated successfully", book: updatedBook });
+  } catch (error) {
+    return res.status(400).json({ msg: "Something went wrong while updating the book", Error: error.message });
+  }
+};
+
+
+const deleteBookById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const book = await books.findById(id);
+
+    if (!book) {
+      return res.status(404).json({ msg: "Book Not Found" });
+    }
+
+    if (book.availablecopies < book.totalcopies) {
+      return res.status(400).json({ msg: "A borrowed book cannot be deleted" });
+    }
+
+    await books.findByIdAndDelete(id);
+
+    return res.status(200).json({ msg: "Book has been deleted successfully" });
+
+  } catch (error) {
+    return res.status(500).json({ 
+      msg: "Something went wrong while deleting the book", 
+      Error: error.message 
+    });
+  }
+};
+
+
 const getallbooks = async (req, res) => {
   try {
     const allbooks = await books.find();
@@ -40,7 +81,7 @@ const getBookById = async (req, res) => {
   try {
     const getBook = await books.findById(id);
     if (!getBook) {
-      return res.status(444).json({ msg: "Book Not Found" });
+      return res.status(404).json({ msg: "Book Not Found" });
     }
     return res.status(200).json({ avlBooks: getBook });
   } catch (error) {
@@ -48,30 +89,6 @@ const getBookById = async (req, res) => {
   }
 };
 
-const updateBookById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const updatedBook = await books.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
-    if (!updatedBook) {
-      return res.status(444).json({ msg: "Book Not Found" });
-    }
-    return res.status(200).json({ msg: "Book has updated successfully", book: updatedBook });
-  } catch (error) {
-    return res.status(400).json({ msg: "Something went wrong while updating the book", Error: error.message });
-  }
-};
 
-const deleteBookById = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const deletedBook = await books.findByIdAndDelete(id);
-    if (!deletedBook) {
-      return res.status(444).json({ msg: "Book Not Found" });
-    }
-    return res.status(200).json({ msg: "Book has been deleted successfully" });
-  } catch (error) {
-    return res.status(500).json({ msg: "Something went wrong while deleting the book", Error: error.message });
-  }
-};
 
-module.exports = { addNewBook, getallbooks, getBookById, updateBookById, deleteBookById };
+module.exports = { getallbooks, getBookById,addNewBook,updateBookById,deleteBookById };

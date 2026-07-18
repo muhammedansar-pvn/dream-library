@@ -44,7 +44,7 @@ const bookschema = new mongoose.Schema({
   },
 });
 
-bookschema.pre("save", function (next) {
+bookschema.pre("save", function () {
   if (!this.isbn) {
     const randomHex = crypto.randomBytes(6).toString("hex").toUpperCase();
     this.isbn = `ISBN-${randomHex}`;

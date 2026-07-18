@@ -1,8 +1,6 @@
-const User = require("../models/User");
+const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-
-const SALT_ROUNDS = 10;
 
 const generateTokens = (user) => ({
   accessToken: jwt.sign(
@@ -17,7 +15,7 @@ const generateTokens = (user) => ({
   ),
 });
 
-const buildUserResponse = (user) => ({
+const userRes = (user) => ({
   id: user._id,
   name: user.name,
   email: user.email,
@@ -37,20 +35,20 @@ const register = async (req, res, next) => {
       ? role.toLowerCase()
       : "member";
 
-    const normalizedEmail = email.toLowerCase();
+    const emailvrf = email.toLowerCase();
 
-    const existingUser = await User.findOne({ email: normalizedEmail });
+    const existingUser = await User.findOne({ email: emailvrf });
     if (existingUser) {
       return res.status(400).json({ message: "An account with this email already exists" });
     }
 
     const userData = {
       name,
-      email: normalizedEmail,
+      email: emailvrf,
       mobile,
       address,
       role: userRole,
-      password: await bcrypt.hash(password, SALT_ROUNDS),
+      password: await bcrypt.hash(password, 10),
       ...(userRole === "member" && { status: "Active" }),
     };
 
@@ -61,7 +59,7 @@ const register = async (req, res, next) => {
       message: `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} registration successful`,
       accessToken,
       refreshToken,
-      user: buildUserResponse(newUser),
+      user: userRes(newUser),
     });
   } catch (err) {
     next(err);
@@ -80,30 +78,30 @@ const login = async (req, res, next) => {
       return res.status(400).json({ message: "Password is required" });
     }
 
-    const targetUser = membershipNumber
+    const ogUser = membershipNumber
       ? await User.findOne({ membershipNumber: membershipNumber.toUpperCase() })
       : await User.findOne({ email: email.toLowerCase() });
 
-    if (!targetUser) {
+    if (!ogUser) {
       return res.status(404).json({ message: "Account records do not exist" });
     }
 
-    if (targetUser.status !== "Active") {
-      return res.status(403).json({ message: "Access denied. Account is currently marked inactive" });
+    if (ogUser.status !== "Active") {
+      return res.status(403).json({ message: "This account is inactive" });
     }
 
-    const passwordMatches = await bcrypt.compare(password, targetUser.password);
+    const passwordMatches = await bcrypt.compare(password, ogUser.password);
     if (!passwordMatches) {
       return res.status(400).json({ message: "Invalid password credentials provided" });
     }
 
-    const { accessToken, refreshToken } = generateTokens(targetUser);
+    const { accessToken, refreshToken } = generateTokens(ogUser);
 
     return res.status(200).json({
       message: "Authentication successful",
       accessToken,
       refreshToken,
-      user: buildUserResponse(targetUser),
+      user: userRes(ogUser),
     });
   } catch (err) {
     next(err);

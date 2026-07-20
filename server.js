@@ -7,6 +7,7 @@ const connectDB= require("./src/config/db")
 const authrouter=require("./src/router/authrouter")
 const notFound= require("./src/middleware/notFound")
 const errorhandling= require("./src/middleware/errorhandling")
+const logger = require ("./src/middleware/loggermiddleware")
 const bookroutes= require("./src/router/bookroutes")
 const borrowroutes = require ("./src/router/borrowroutes")
 const dashbordroutes = require ("./src/router/dashbordroutes")
@@ -16,7 +17,7 @@ dotenv.config()
 app.use(express.json());
 
 connectDB();
-console.log("MONGO_URI:", process.env.MONGO_URI)
+//console.log("MONGO_URI:", process.env.MONGO_URI)
 
 
 app.use("/auth", authrouter);
@@ -27,7 +28,7 @@ app.use ("/dashbord", dashbordroutes)
 
 app.use(notFound)
 app.use(errorhandling)
-
+app.use(logger)
 
 app.get('/', (req, res) => {
     res.send('server running');

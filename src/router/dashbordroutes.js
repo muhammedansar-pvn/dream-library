@@ -6,6 +6,8 @@ const Router = express.Router()
 
 const {dashbord} = require ("../controllers/dashbord")
 
-Router.get("/", protected, accsesRoles, dashbord)
+
+Router.get("/", protected, accsesRoles("admin"), dashbord)
+
 
 module.exports = Router

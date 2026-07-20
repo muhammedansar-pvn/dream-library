@@ -1,11 +1,13 @@
-const User = require ("../models/user")
-const books= require ("../models/book")
+const User = require("../models/user");
+const books = require("../models/book");
 
 const addNewBook = async (req, res, next) => {
   try {
     const { title, author, category, publishedyear, totalcopies, isbn } = req.body;
 
-    const existingBook = await books.findOne({ title });
+  
+    const existingBook = await books.findOne({ $or: [{ title }] });
+    console.log(existingBook);
     if (existingBook) {
       return res.status(400).json({ error: true, message: "this book already exists" });
     }
@@ -17,7 +19,7 @@ const addNewBook = async (req, res, next) => {
       publishedyear,
       totalcopies,
       availablecopies: totalcopies,
-      isbn: isbn 
+      isbn: isbn,
     });
 
     return res.status(201).json({ error: false, message: "Book added successfully", book: newBook });
@@ -40,7 +42,6 @@ const updateBookById = async (req, res) => {
   }
 };
 
-
 const deleteBookById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -57,56 +58,48 @@ const deleteBookById = async (req, res) => {
     await books.findByIdAndDelete(id);
 
     return res.status(200).json({ msg: "Book has been deleted successfully" });
-
   } catch (error) {
-    return res.status(500).json({ 
-      msg: "Something went wrong while deleting the book", 
-      Error: error.message 
+    return res.status(500).json({
+      msg: "Something went wrong while deleting the book",
+      Error: error.message,
     });
   }
 };
 
-
 const getallbooks = async (req, res) => {
   try {
     const { category, search } = req.query;
-    
+
     const filter = {};
-    
+
     if (category) {
       filter.category = category;
     }
-    
+
     if (search) {
-      filter.title = { $regex: search, $options: "i" }; 
-      filter.author = { $regex: search, $options: "i" }; 
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { author: { $regex: search, $options: "i" } },
+      ];
     }
-    
-    filter.availableCopies = { $gt: 0 };
-    
-    let books = await books.find(filter);
+
+    filter.availablecopies = { $gt: 0 };
+
+    const bookList = await books.find(filter);
 
     res.status(200).json({
       success: true,
-      count: books.length,
-      books,
-    })
-
+      count: bookList.length,
+      books: bookList,
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Failed to fetch books",
       error: error.message,
-    })
+    });
   }
 };
-
-
-
-
-
-
-
 
 const getBookById = async (req, res) => {
   const { id } = req.params;
@@ -121,6 +114,4 @@ const getBookById = async (req, res) => {
   }
 };
 
-
-
-module.exports = { getallbooks, getBookById,addNewBook,updateBookById,deleteBookById };
+module.exports = { getallbooks, getBookById, addNewBook, updateBookById, deleteBookById };

@@ -5,9 +5,13 @@ const Borrow = require("../models/borrow");
 const dashbord = async (req, res, next) => {
   try {
     const [
-      totalBooks, totalMembers,totalBorrowedBooks,totalOverdueBooks,topBooks,topMembers,
+      totalBooks,
+      totalMembers,
+      totalBorrowedBooks,
+      totalOverdueBooks,
+      topborrowedBooks,
+      topMembers,
     ] = await Promise.all([
-      
       Book.countDocuments(),
 
       User.countDocuments({ role: "member" }),
@@ -19,7 +23,6 @@ const dashbord = async (req, res, next) => {
         dueDate: { $lt: new Date() },
       }),
 
-      
       Borrow.aggregate([
         {
           $group: {
@@ -49,7 +52,6 @@ const dashbord = async (req, res, next) => {
         },
       ]),
 
-      
       Borrow.aggregate([
         {
           $group: {
@@ -88,7 +90,7 @@ const dashbord = async (req, res, next) => {
         totalBorrowedBooks,
         totalOverdueBooks,
       },
-      topBorrowedBooks: topBooks,
+      topBorrowedBooks: topborrowedBooks,
       topActiveMembers: topMembers,
     });
   } catch (err) {

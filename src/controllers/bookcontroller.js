@@ -1,15 +1,22 @@
-const User = require("../models/user");
 const books = require("../models/book");
 
 const addNewBook = async (req, res, next) => {
   try {
-    const { title, author, category, publishedyear, totalcopies, isbn } = req.body;
+    const {
+      title,
+      author,
+      category,
+      publishedyear,
+      totalcopies,
+      isbn,
+    } = req.body;
 
-  
-    const existingBook = await books.findOne({ $or: [{ title }] });
-    console.log(existingBook);
+    const existingBook = await books.findOne({ title });
+
     if (existingBook) {
-      return res.status(400).json({ error: true, message: "this book already exists" });
+      return res.status(400).json({
+        message: "This book already exists",
+      });
     }
 
     const newBook = await books.create({
@@ -19,99 +26,159 @@ const addNewBook = async (req, res, next) => {
       publishedyear,
       totalcopies,
       availablecopies: totalcopies,
-      isbn: isbn,
+      isbn,
     });
 
-    return res.status(201).json({ error: false, message: "Book added successfully", book: newBook });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: true, message: "Internal Server Error" });
+    res.status(201).json({
+      message: "Book added successfully",
+      book: newBook,
+    });
+
+  } catch (err) {
+    next(err);
   }
 };
 
-const updateBookById = async (req, res) => {
-  const { id } = req.params;
+const updateBookById = async (req, res, next) => {
   try {
-    const updatedBook = await books.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+
+    const updatedBook = await books.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
     if (!updatedBook) {
-      return res.status(404).json({ msg: "Book Not Found" });
+      return res.status(404).json({
+        message: "Book not found",
+      });
     }
-    return res.status(200).json({ msg: "Book has updated successfully", book: updatedBook });
-  } catch (error) {
-    return res.status(400).json({ msg: "Something went wrong while updating the book", Error: error.message });
+
+    res.status(200).json({
+      message: "Book updated successfully",
+      book: updatedBook,
+    });
+
+  } catch (err) {
+    next(err);
   }
 };
 
-const deleteBookById = async (req, res) => {
-  const { id } = req.params;
+const deleteBookById = async (req, res, next) => {
   try {
-    const book = await books.findById(id);
+
+    const book = await books.findById(req.params.id);
 
     if (!book) {
-      return res.status(404).json({ msg: "Book Not Found" });
+      return res.status(404).json({
+        message: "Book not found",
+      });
     }
 
     if (book.availablecopies < book.totalcopies) {
-      return res.status(400).json({ msg: "A borrowed book cannot be deleted" });
+      return res.status(400).json({
+        message: "A borrowed book cannot be deleted",
+      });
     }
 
-    await books.findByIdAndDelete(id);
+    await books.findByIdAndDelete(req.params.id);
 
-    return res.status(200).json({ msg: "Book has been deleted successfully" });
-  } catch (error) {
-    return res.status(500).json({
-      msg: "Something went wrong while deleting the book",
-      Error: error.message,
+    res.status(200).json({
+      message: "Book deleted successfully",
     });
+
+  } catch (err) {
+    next(err);
   }
 };
 
-const getallbooks = async (req, res) => {
+const getallbooks = async (req, res, next) => {
   try {
-    const { category, search } = req.query;
+    
+    const {category,search,page = 1,limit = 10,sortBy = "createdAt",order = "desc"} = req.query;
 
-    const filter = {};
+    const filter = {
+      availablecopies: { $gt: 0 },
+    };
 
+  
     if (category) {
       filter.category = category;
     }
 
     if (search) {
       filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { author: { $regex: search, $options: "i" } },
+        {
+          title: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          author: {
+            $regex: search,
+            $options: "i",
+          },
+        },
       ];
     }
 
-    filter.availablecopies = { $gt: 0 };
+  
+    const sort = {
+      [sortBy]: order === "asc" ? 1 : -1,
+    };
 
-    const bookList = await books.find(filter);
+    const skip = (page - 1) * limit;
+
+    const totalBooks = await books.countDocuments(filter);
+
+    const bookList = await books
+      .find(filter)
+      .sort(sort)
+      .skip(skip)
+      .limit(Number(limit));
 
     res.status(200).json({
       success: true,
+      totalBooks,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalBooks / limit),
       count: bookList.length,
       books: bookList,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch books",
-      error: error.message,
-    });
+
+  } catch (err) {
+    next(err);
   }
 };
 
-const getBookById = async (req, res) => {
-  const { id } = req.params;
+const getBookById = async (req, res, next) => {
   try {
-    const getBook = await books.findById(id);
-    if (!getBook) {
-      return res.status(404).json({ msg: "Book Not Found" });
+
+    const book = await books.findById(req.params.id);
+
+    if (!book) {
+      return res.status(404).json({
+        message: "Book not found",
+      });
     }
-    return res.status(200).json({ avlBooks: getBook });
-  } catch (error) {
-    return res.status(400).json({ Error: error.message });
+
+    res.status(200).json({
+      book,
+    });
+
+  } catch (err) {
+    next(err);
   }
 };
 
-module.exports = { getallbooks, getBookById, addNewBook, updateBookById, deleteBookById };
+module.exports = {
+  addNewBook,
+  updateBookById,
+  deleteBookById,
+  getallbooks,
+  getBookById,
+};

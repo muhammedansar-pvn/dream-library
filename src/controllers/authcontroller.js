@@ -20,43 +20,37 @@ const userRes = (user) => ({
   name: user.name,
   email: user.email,
   role: user.role,
-  ...(user.membershipNumber && { membershipNumber: user.membershipNumber }),
+  ...(user.membershipNumber && {
+    membershipNumber: user.membershipNumber,
+  }),
 });
 
 const register = async (req, res, next) => {
   try {
     const { name, email, password, mobile, address, role } = req.body;
 
-    if (!password) {
-      return res.status(400).json({ message: "Password is required" });
-    }
+    const existingUser = await User.findOne({ email });
 
-    const userRole = ["admin", "member"].includes(role?.toLowerCase())
-      ? role.toLowerCase()
-      : "member";
-
-    const emailvld = email.toLowerCase();
-
-    const existingUser = await User.findOne({ email: emailvld });
     if (existingUser) {
-      return res.status(400).json({ message: "An account with this email already exists" });
+      return res.status(400).json({
+        message: "An account with this email already exists",
+      });
     }
 
-    const userData = {
+    const newUser = await User.create({
       name,
-      email: emailvld,
+      email,
+      password: await bcrypt.hash(password, 10),
       mobile,
       address,
-      role: userRole,
-      password: await bcrypt.hash(password, 10),
-      ...(userRole === "member" && { status: "Active" }),
-    };
+      role,
+      ...(role === "member" && { status: "Active" }),
+    });
 
-    const newUser = await User.create(userData);
     const { accessToken, refreshToken } = generateTokens(newUser);
 
-    return res.status(201).json({
-      message: `${userRole.charAt(0).toUpperCase() + userRole.slice(1)} registration successful`,
+    res.status(201).json({
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} registration successful`,
       accessToken,
       refreshToken,
       user: userRes(newUser),
@@ -68,44 +62,46 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
-    const { email, password, membershipNumber } = req.body;
+    const { email, membershipNumber, password } = req.body;
 
-    if (!membershipNumber && !email) {
-      return res.status(400).json({ message: "Please provide an email or a library card number" });
+    const user = membershipNumber
+      ? await User.findOne({ membershipNumber })
+      : await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Account records do not exist",
+      });
     }
 
-    if (!password) {
-      return res.status(400).json({ message: "Password is required" });
+    if (user.status !== "Active") {
+      return res.status(403).json({
+        message: "This account is inactive",
+      });
     }
 
-    const ogUser = membershipNumber
-      ? await User.findOne({ membershipNumber: membershipNumber.toUpperCase() })
-      : await User.findOne({ email: email.toLowerCase() });
+    const passwordMatches = await bcrypt.compare(password, user.password);
 
-    if (!ogUser) {
-      return res.status(404).json({ message: "Account records do not exist" });
-    }
-
-    if (ogUser.status !== "Active") {
-      return res.status(403).json({ message: "This account is inactive" });
-    }
-
-    const passwordMatches = await bcrypt.compare(password, ogUser.password);
     if (!passwordMatches) {
-      return res.status(400).json({ message: "Invalid password credentials provided" });
+      return res.status(400).json({
+        message: "Invalid password credentials provided",
+      });
     }
 
-    const { accessToken, refreshToken } = generateTokens(ogUser);
+    const { accessToken, refreshToken } = generateTokens(user);
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Authentication successful",
       accessToken,
       refreshToken,
-      user: userRes(ogUser),
+      user: userRes(user),
     });
   } catch (err) {
     next(err);
   }
 };
 
-module.exports = { register, login };
+module.exports = {
+  register,
+  login,
+};

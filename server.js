@@ -1,39 +1,42 @@
-const express = require('express');
+const express = require("express");
+const dotenv = require("dotenv");
+
+const connectDB = require("./src/config/db");
+
+const authRouter = require("./src/router/authrouter");
+const bookRoutes = require("./src/router/bookroutes");
+const borrowRoutes = require("./src/router/borrowroutes");
+const dashboardRoutes = require("./src/router/dashbordroutes");
+
+const logger = require("./src/middleware/loggermiddleware");
+const notFound = require("./src/middleware/notFound");
+const errorHandling = require("./src/middleware/errorhandling");
+
+dotenv.config();
+
 const app = express();
-const PORT = 4000
-const dotenv = require ("dotenv")
-const connectDB= require("./src/config/db")
+const PORT = process.env.PORT || 4000;
 
-const authrouter=require("./src/router/authrouter")
-const notFound= require("./src/middleware/notFound")
-const errorhandling= require("./src/middleware/errorhandling")
-const logger = require ("./src/middleware/loggermiddleware")
-const bookroutes= require("./src/router/bookroutes")
-const borrowroutes = require ("./src/router/borrowroutes")
-const dashbordroutes = require ("./src/router/dashbordroutes")
-
-dotenv.config()
+connectDB();
 
 app.use(express.json());
 
-connectDB();
-//console.log("MONGO_URI:", process.env.MONGO_URI)
 
+app.use(logger);
 
-app.use("/auth", authrouter);
-app.use("/book", bookroutes )
-app.use ("/borrow", borrowroutes)
-app.use ("/dashbord", dashbordroutes)
+app.use("/auth", authRouter);
+app.use("/book", bookRoutes);
+app.use("/borrow", borrowRoutes);
+app.use("/dashboard", dashboardRoutes);
 
-
-app.use(notFound)
-app.use(errorhandling)
-app.use(logger)
-
-app.get('/', (req, res) => {
-    res.send('server running');
+app.get("/", (req, res) => {
+  res.send("Server Running");
 });
 
+
+app.use(notFound);
+app.use(errorHandling);
+
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });

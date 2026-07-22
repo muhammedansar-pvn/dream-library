@@ -84,7 +84,7 @@ const dashbord = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      dashboard: {
+      dashbord: {
         totalBooks,
         totalMembers,
         totalBorrowedBooks,

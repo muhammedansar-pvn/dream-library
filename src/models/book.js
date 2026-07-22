@@ -37,12 +37,16 @@ const bookschema = new mongoose.Schema({
     min: [0, "Available copies cannot be negative"],
   },
 
+
   totalcopies: {
     type: Number,
     required: true,
     min: [1, "Total copies must be at least 1"],
   },
 });
+{
+    timestamps:true
+}
 
 bookschema.pre("save", function () {
   if (!this.isbn) {

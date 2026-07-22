@@ -4,16 +4,15 @@ const Router = express.Router();
 const {
   borrowBook,
   returnBook,
-} = require("../controllers/borrowcontrller");
-
+  viewProfile,
+  getallbooks,
+  getBookById
+} = require("../controllers/usercontroller")
 const { protected } = require("../middleware/authmiddleware");
 const validation = require("../middleware/validationmiddleware");
 
-const {
-  borrowBookSchema,
-  returnBookSchema,
-} = require("../validation/borrowvalidation");
-
+const {borrowBookSchema,returnBookSchema,} = require("../validation/borrowvalidation");
+const {querySchema,idSchema}= require ("../validation/bookvalidation")
 
 Router.post(
   "/borrowbook",
@@ -27,5 +26,11 @@ Router.post(
   validation(returnBookSchema),
   returnBook
 );
+
+Router.get("/viewprofile", viewProfile)
+
+Router.get("/:id",validation(idSchema, "params"),getBookById);
+
+Router.get("/",validation(querySchema,),getallbooks);
 
 module.exports = Router;

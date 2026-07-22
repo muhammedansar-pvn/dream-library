@@ -4,7 +4,7 @@ const { protected, accsesRoles } = require("../middleware/authmiddleware")
 
 const Router = express.Router()
 
-const {dashbord} = require ("../controllers/dashbord")
+const {dashbord} = require ("../controllers/admindashbord")
 
 
 Router.get("/", protected, accsesRoles("admin"), dashbord)

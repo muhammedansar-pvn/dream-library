@@ -27,8 +27,7 @@ const createBookSchema = Joi.object({
     .required(),
 
   isbn: Joi.string()
-    .trim()
-    .required(),
+    .trim(),
 });
 
 const updateBookSchema = Joi.object({
@@ -54,7 +53,6 @@ const idSchema = Joi.object({
   id: Joi.string()
     .hex()
     .length(24)
-    .required(),
 });
 
 const querySchema = Joi.object({

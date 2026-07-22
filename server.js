@@ -4,9 +4,9 @@ const dotenv = require("dotenv");
 const connectDB = require("./src/config/db");
 
 const authRouter = require("./src/router/authrouter");
-const bookRoutes = require("./src/router/bookroutes");
-const borrowRoutes = require("./src/router/borrowroutes");
-const dashboardRoutes = require("./src/router/dashbordroutes");
+const adminRoter = require("./src/router/admin");
+const userRoutes = require("./src/router/userrouter");
+const dashbordRoutes = require("./src/router/dashbordroutes");
 
 const logger = require("./src/middleware/loggermiddleware");
 const notFound = require("./src/middleware/notFound");
@@ -25,9 +25,9 @@ app.use(express.json());
 app.use(logger);
 
 app.use("/auth", authRouter);
-app.use("/book", bookRoutes);
-app.use("/borrow", borrowRoutes);
-app.use("/dashboard", dashboardRoutes);
+app.use("/admin", adminRoter);
+app.use("/user", userRoutes);
+app.use("/dashbord", dashbordRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server Running");

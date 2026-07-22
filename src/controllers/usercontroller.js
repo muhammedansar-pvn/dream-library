@@ -1,6 +1,91 @@
-const Borrow = require("../models/borrow");
-const User = require("../models/user");
-const Book = require("../models/book");
+const books= require("../models/book")
+const user = require("../models/user")
+const borrow= require("../models/borrow")
+
+const getallbooks = async (req, res, next) => {
+  try {
+
+    let { category, search, page, limit, sortBy, order } = req.query;
+
+    page = page || 1;
+    limit = limit || 10;
+    sortBy = sortBy || "createdAt";
+    order = order || "desc";
+
+    const filter = {
+      availablecopies: { $gt: 0 },
+    };
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (search) {
+      filter.$or = [
+        {
+          title: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+        {
+          author: {
+            $regex: search,
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    const sort = {
+      [sortBy]: order === "asc" ? 1 : -1,
+    };
+
+    const skip = (page - 1) * limit;
+
+    const totalBooks = await books.countDocuments(filter);
+
+    const bookList = await books
+      .find(filter)
+      .sort(sort)
+      .skip(skip)
+      .limit(Number(limit));
+
+    res.status(200).json({
+      success: true,
+      totalBooks,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalBooks / limit),
+      count: bookList.length,
+      books: bookList,
+    });
+
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+const viewProfile= async (req,res,next)=>{
+  try{
+const {membershipNumber}= req.body;
+
+const check= await User.findOne({membershipNumber});
+
+if(!check){
+  return res.status(404).json({
+    message: "user not found"
+  })
+}
+
+res.status(200).json({
+check
+})
+
+  }catch(err){
+    next(err)
+  }
+}
 
 const borrowBook = async (req, res, next) => {
   try {
@@ -46,13 +131,13 @@ const borrowBook = async (req, res, next) => {
       Date.now() + 7 * 24 * 60 * 60 * 1000
     );
 
-    user.borrowedBooks.push({
-      bookId: book._id,
-      bookTitle: book.title,
-      borrowDate,
-      dueDate,
-      returned: false,
-    });
+   user.borrowedBooks.push({
+  bookId: book._id,
+  title: book.title,
+  borrowDate,
+  dueDate,
+  returned: false,
+});
 
     await user.save();
 
@@ -66,6 +151,7 @@ const borrowBook = async (req, res, next) => {
       },
       book: book._id,
       isbn: book.isbn,
+       title: book.title,
       borrowDate,
       dueDate,
       status: "borrowed",
@@ -85,6 +171,7 @@ const borrowBook = async (req, res, next) => {
     res.status(201).json({
       message: "Book borrowed successfully",
       borrow,
+      isbn: book.isbn
     });
 
   } catch (err) {
@@ -161,7 +248,30 @@ const returnBook = async (req, res, next) => {
   }
 };
 
+const getBookById = async (req, res, next) => {
+  try {
+
+    const book = await books.findById(req.params.id);
+
+    if (!book) {
+      return res.status(404).json({
+        message: "Book not found",
+      });
+    }
+
+    res.status(200).json({
+      book,
+    });
+
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   borrowBook,
   returnBook,
+  viewProfile,
+  getallbooks,
+  getBookById
 };

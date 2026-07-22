@@ -11,6 +11,17 @@ const BorrowSchema = new mongoose.Schema({
         ref: "User", 
         required: true 
     },
+     isbn: {
+    type: String,
+    unique: true,
+  },
+
+   title: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
     issueDate: { 
         type: Date, 
         default: Date.now 

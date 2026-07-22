@@ -22,7 +22,15 @@ const returnBookSchema = Joi.object({
     .required(),
 });
 
+const viewprofile= Joi.object({
+  membershipNumber: Joi.string()
+    .trim()
+    .uppercase()
+    .required(),
+})
+
 module.exports = {
+  viewprofile,
   borrowBookSchema,
   returnBookSchema,
 };

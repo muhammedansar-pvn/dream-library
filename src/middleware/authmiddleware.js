@@ -1,27 +1,52 @@
 const jwt = require("jsonwebtoken");
 
 const protected = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-  
-  if (!token) return res.status(401).json({ message: "Access Denied: Missing authorization header token" });
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      success: false,
+      message: "Authorization token is required",
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
 
   try {
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = verified;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = decoded;
+
     next();
-  } catch (err) {
-    res.status(403).json({ message: "Invalid or expired token payload structure" });
+  } catch (error) {
+    return res.status(403).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
   }
 };
 
 const accsesRoles = (...roles) => {
   return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: "you have not permissions" });
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
     }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to access this resource",
+      });
+    }
+
     next();
   };
 };
 
-module.exports = { protected, accsesRoles };
+module.exports = {
+  protected,
+  accsesRoles,
+};

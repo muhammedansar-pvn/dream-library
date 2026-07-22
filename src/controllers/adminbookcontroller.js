@@ -1,4 +1,6 @@
 const books = require("../models/book");
+const User= require ("../models/user")
+
 
 const addNewBook = async (req, res, next) => {
   try {
@@ -95,16 +97,21 @@ const deleteBookById = async (req, res, next) => {
   }
 };
 
+
 const getallbooks = async (req, res, next) => {
   try {
-    
-    const {category,search,page = 1,limit = 10,sortBy = "createdAt",order = "desc"} = req.query;
+
+    let { category, search, page, limit, sortBy, order } = req.query;
+
+    page = page || 1;
+    limit = limit || 10;
+    sortBy = sortBy || "createdAt";
+    order = order || "desc";
 
     const filter = {
       availablecopies: { $gt: 0 },
     };
 
-  
     if (category) {
       filter.category = category;
     }
@@ -126,7 +133,6 @@ const getallbooks = async (req, res, next) => {
       ];
     }
 
-  
     const sort = {
       [sortBy]: order === "asc" ? 1 : -1,
     };
@@ -155,6 +161,21 @@ const getallbooks = async (req, res, next) => {
   }
 };
 
+
+const getallusers = async (req, res, next) => {
+  try {
+    const allusers = await User.find();
+
+    res.status(200).json({
+      success: true,
+      allusers,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 const getBookById = async (req, res, next) => {
   try {
 
@@ -175,10 +196,12 @@ const getBookById = async (req, res, next) => {
   }
 };
 
+
 module.exports = {
   addNewBook,
   updateBookById,
   deleteBookById,
-  getallbooks,
+  getallusers,
   getBookById,
+  getallbooks
 };

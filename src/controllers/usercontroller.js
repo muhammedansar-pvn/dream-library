@@ -1,5 +1,5 @@
 const books= require("../models/book")
-const user = require("../models/user")
+const User = require("../models/user")
 const borrow= require("../models/borrow")
 
 const getallbooks = async (req, res, next) => {
@@ -91,7 +91,7 @@ const borrowBook = async (req, res, next) => {
   try {
     const { membershipNumber, isbn } = req.body;
 
-    const book = await Book.findOne({ isbn });
+    const book = await books.findOne({ isbn });
 
     if (!book) {
       return res.status(404).json({
@@ -183,7 +183,7 @@ const returnBook = async (req, res, next) => {
   try {
     const { membershipNumber, isbn } = req.body;
 
-    const book = await Book.findOne({ isbn });
+    const book = await books.findOne({ isbn });
 
     if (!book) {
       return res.status(404).json({
@@ -211,7 +211,7 @@ const returnBook = async (req, res, next) => {
       });
     }
 
-    await Borrow.findOneAndUpdate(
+    await borrow.findOneAndUpdate(
       {
         memberId: user._id,
         bookId: book._id,

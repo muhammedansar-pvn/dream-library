@@ -77,4 +77,4 @@ userSchema.pre("save", async function () {
   this.membershipNumber = generatedID;
 });
 
-module.exports = mongoose.models.User || mongoose.model("User", userSchema);
+module.exports = mongoose.model("User", userSchema);

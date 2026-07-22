@@ -14,23 +14,15 @@ const validation = require("../middleware/validationmiddleware");
 const {borrowBookSchema,returnBookSchema,} = require("../validation/borrowvalidation");
 const {querySchema,idSchema}= require ("../validation/bookvalidation")
 
-Router.post(
-  "/borrowbook",
-  protected,
-  validation(borrowBookSchema),borrowBook);
+Router.get("/allbooks",validation(querySchema,),getallbooks);
+Router.post("/borrowbook", protected,validation(borrowBookSchema),borrowBook);
 
 
-Router.post(
-  "/returnbook",
-  protected,
-  validation(returnBookSchema),
-  returnBook
-);
+Router.post("/returnbook",protected,validation(returnBookSchema),returnBook);
 
 Router.get("/viewprofile", viewProfile)
 
 Router.get("/:id",validation(idSchema, "params"),getBookById);
 
-Router.get("/",validation(querySchema,),getallbooks);
 
 module.exports = Router;
